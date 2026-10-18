@@ -44,49 +44,6 @@ When upstream LibRaw and darktable support the R6 III, drop the LibRaw
 source, the `prepare()` lines that swap it in, and the patch. At that point the stock
 `darktable` package should do the job, and this package can be removed.
 
-## Per machine
-
-### Workstation (RTX 4070 Ti Super)
-
-One-time migration from the hand-built install, which lives at the same
-prefix (pacman refuses to overwrite files it doesn't own):
-
-```sh
-cp ~/.config/darktable/library.db ~/.config/darktable/library.db.pre-r6m3-5.6.2   # see warning
-sudo rm -rf /opt/darktable-r6m3
-makepkg -si
-```
-
-The existing `/usr/local/bin/darktable` symlink and the
-`/usr/local/share/applications/org.darktable.darktable.desktop` symlink both
-point into `/opt/darktable-r6m3`, so they keep working unchanged.
-
-GPU AI: CUDA and cuDNN come from pacman (`cuda`, `cudnn`), and the GPU ONNX Runtime is
-in `~/.local/lib/onnxruntime-cuda/` (installed with
-`tools/ai/install-ort-gpu.sh --ep cuda13`). The config is the shared
-`~/.config/darktable/`, and Preferences -> AI is already set up there.
-
-**Downgrade warning.** The previous build here was darktable master (5.7-dev).
-The library schema is the same as 5.6.2's, but 717 images have
-`highlights` v5 / `demosaic` v7 history, which 5.6.2 replaces with default
-settings (`src/develop/develop.c:2632` in 5.6.2). 31 images use
-`contrastntexture` and 2 use `satcurvergb`, which don't exist in 5.6.2. The
-first edit of such an image in 5.6.2 rewrites its history and XMP.
-
-### Babbage (GTX 1050, Pascal)
-
-The package itself is identical. The GPU side stays as set up in
-`SETUP-GUIDE.md`: CUDA 12.9 and cuDNN 9.10.2 in user space
-(`install-cuda12-pascal-libs.sh`), ONNX Runtime from
-`install-ort-gpu.sh --ep cuda12 --manifest <master ort_gpu.json>`, and the
-`~/bin/darktable-r6iii` launcher. That launcher sets `LD_LIBRARY_PATH`, sets
-`DT_CUDA_MEM_LIMIT_MB=2048`, and uses its own config dir.
-
-Migration: install this package, change `PREFIX=` in `~/bin/darktable-r6iii`
-to `/opt/darktable-r6m3`, check that it starts, then
-`sudo rm -rf /opt/darktable-r6iii`. Both builds are 5.6.2, so the
-`~/.config/darktable-r6iii` library needs no migration.
-
 ## Check
 
 ```sh
@@ -94,15 +51,24 @@ to `/opt/darktable-r6m3`, check that it starts, then
 pacman -Qi darktable-r6m3 | grep -E 'Version|Install Date'
 ```
 
-Opening an R6 III CR3 with `-d control` should log
-`[noiseprofile] looking for maker 'Canon', model 'EOS R6 Mark III'` and find
-the bundled profile.
+The patch works if darktable names the camera `Canon` / `EOS R6 Mark III`,
+the key of the bundled noise profile. A throwaway config dir keeps your library
+out of it:
+
+```sh
+tmp=$(mktemp -d)
+/opt/darktable-r6m3/bin/darktable-cli <some R6 III>.CR3 "$tmp/out.jpg" \
+  --core --configdir "$tmp/config" -d sql 2>&1 | grep -m1 -o "INSERT  INTO main.cameras.*"
+# expect: ... VALUES ('Canon', 'EOS R6 Mark III', 'EOS R6 Mark III')
+rm -rf "$tmp"
+```
+
+To see the profile itself, open a CR3 in the darkroom and enable *denoise
+(profiled)*: the profile list should offer `EOS R6 Mark III iso <n>` rather
+than only "generic poissonian".
 
 ## Remove
 
 ```sh
 sudo pacman -R darktable-r6m3
 ```
-
-On the workstation, also remove the `/usr/local` symlinks, or the
-`darktable` command and the launcher will point at nothing.
