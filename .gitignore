@@ -1,0 +1,8 @@
+/src/
+/pkg/
+/LibRaw/
+*.tar.xz
+*.tar.xz.asc
+*.tgz
+*.pkg.tar.zst
+*.log

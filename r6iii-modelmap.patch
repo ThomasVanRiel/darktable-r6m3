@@ -1,0 +1,18 @@
+diff --git a/src/imageio/imageio_libraw.c b/src/imageio/imageio_libraw.c
+index 93cfc212ed..06b52fc19e 100644
+--- a/src/imageio/imageio_libraw.c
++++ b/src/imageio/imageio_libraw.c
+@@ -76,6 +76,13 @@ const model_map_t modelMap[] = {
+     .clean_model = "EOS R6",
+     .clean_alias = "EOS R6"
+   },
++  {
++    .exif_make = "Canon",
++    .exif_model = "Canon EOS R6 Mark III",
++    .clean_make = "Canon",
++    .clean_model = "EOS R6 Mark III",
++    .clean_alias = "EOS R6 Mark III"
++  },
+   {
+     .exif_make = "Canon",
+     .exif_model = "Canon EOS R3",
