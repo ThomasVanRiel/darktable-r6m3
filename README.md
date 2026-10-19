@@ -26,7 +26,8 @@ matches.
 
 ```sh
 git clone https://github.com/ThomasVanRiel/darktable-r6m3.git && cd darktable-r6m3
-gpg --recv-keys C4CBC150699956E2A3268EF5BB5CC8295B1779C9   # darktable release key, once
+gpg --recv-keys C4CBC150699956E2A3268EF5BB5CC8295B1779C9 \
+               F10F9686652B0E949FCD94C318DCA123F949BD3B   # darktable signing keys, once
 makepkg -si
 ```
 
