@@ -31,8 +31,43 @@ gpg --recv-keys C4CBC150699956E2A3268EF5BB5CC8295B1779C9 \
 makepkg -si
 ```
 
+It shows up in the app launcher as "darktable (R6 III)", next to the stock darktable if
+both are installed.
+
 `makepkg` keeps the downloads and the LibRaw clone in this directory (ignored by git), so a
 rebuild works even if the upstream branch disappears, as long as this directory is kept.
+
+## GPU AI (per machine)
+
+The package bundles only the CPU ONNX Runtime, so the AI modules run on the CPU until
+a GPU runtime is set up. For NVIDIA:
+
+1. **CUDA and cuDNN.** You need CUDA 12 or 13 and cuDNN 9. Use `cuda` and `cudnn`
+   from pacman (CUDA 13). CUDA 13 no longer supports Pascal (GTX 10xx) and Volta
+   cards, so for those, install CUDA 12 and cuDNN 9 yourself, for example in your
+   home directory, and add their `lib` directories to `LD_LIBRARY_PATH` when you start
+   darktable.
+2. **GPU ONNX Runtime.** Run darktable's installer from the unpacked source after a
+   `makepkg`. It needs `curl` and `jq`, and installs to
+   `~/.local/lib/onnxruntime-cuda/`:
+
+   ```sh
+   src/darktable-5.6.2/tools/ai/install-ort-gpu.sh --ep cuda13   # or cuda12
+   ```
+
+   It reads 5.6.2's `data/ort_gpu.json` by default. If the CUDA 12 download fails, pass
+   darktable master's manifest with `--manifest <path>`.
+3. **darktable.** In Preferences → AI, click *detect* (or browse to
+   `libonnxruntime.so*`), restart, then download the models there. They go to
+   `~/.local/share/darktable/models/`. Instead of the preference, you can also set
+   `DT_ORT_LIBRARY=<path to libonnxruntime.so>` in a launcher script.
+
+By default the CUDA runtime may use 75% of the GPU's memory. On a small GPU, lower that
+with `DT_CUDA_MEM_LIMIT_MB=<MB>` in a launcher script, or with
+`plugins/ai/cuda_mem_limit_mb` in `darktablerc`.
+
+AMD (ROCm/MIGraphX) and Intel (OpenVINO) work the same way with `--ep migraphx`,
+`rocm` or `openvino`; see `src/darktable-5.6.2/tools/ai/README.md`.
 
 ## Update
 

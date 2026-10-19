@@ -11,7 +11,7 @@
 
 pkgname=darktable-r6m3
 pkgver=5.6.2
-pkgrel=1
+pkgrel=2
 pkgdesc='darktable with experimental Canon EOS R6 Mark III support (patched LibRaw)'
 arch=(x86_64)
 url='https://darktable.org'
@@ -112,4 +112,13 @@ build() {
 
 package() {
     DESTDIR="$pkgdir" cmake --install build
+
+    # App launchers don't look in /opt. Put a copy of the desktop entry where
+    # they do, with its own name and an absolute icon path, so it can sit next
+    # to the stock darktable entry.
+    sed -e '/^Name\[/d' \
+        -e 's|^Name=.*|Name=darktable (R6 III)|' \
+        -e "s|^Icon=.*|Icon=$_prefix/share/icons/hicolor/scalable/apps/darktable.svg|" \
+        "$pkgdir$_prefix/share/applications/org.darktable.darktable.desktop" |
+        install -Dm644 /dev/stdin "$pkgdir/usr/share/applications/darktable-r6m3.desktop"
 }
